@@ -26,7 +26,7 @@ public partial class User
 
     public bool isActive { get; set; }
 
-    public string refreshToekn { get; set; } = null!;
+    public string refreshToken { get; set; } = null!;
 
     public DateTime tokenExpiry { get; set; }
 

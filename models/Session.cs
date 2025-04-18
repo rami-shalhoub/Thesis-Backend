@@ -17,7 +17,7 @@ public partial class Session
 
     public string contextWindow { get; set; } = null!;
 
-    public string logalTopics { get; set; } = null!;
+    public string legalTopics { get; set; } = null!;
 
     public DateTime? createdAt { get; set; }
 

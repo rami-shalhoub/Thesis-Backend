@@ -20,7 +20,7 @@ public partial class ThesisDappDBContext : DbContext
 
     public virtual DbSet<Document> Document { get; set; }
 
-    public virtual DbSet<LegalResources> LegalResources { get; set; }
+    public virtual DbSet<LegalResource> LegalResource { get; set; }
 
     public virtual DbSet<RevokedToken> RevokedToken { get; set; }
 
@@ -29,6 +29,7 @@ public partial class ThesisDappDBContext : DbContext
     public virtual DbSet<User> User { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseNpgsql("Host=localhost;Database=thesisappdb;Username=rami;Password=710037802");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -72,7 +73,6 @@ public partial class ThesisDappDBContext : DbContext
             entity.Property(e => e.documentType)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'other'::character varying");
-            entity.Property(e => e.encryptionKey).HasDefaultValueSql("'\\x4742'::bytea");
             entity.Property(e => e.ipfsCID).HasMaxLength(255);
             entity.Property(e => e.jurisdiction)
                 .HasMaxLength(255)
@@ -89,7 +89,7 @@ public partial class ThesisDappDBContext : DbContext
                 .HasConstraintName("FK_document_ownerID");
         });
 
-        modelBuilder.Entity<LegalResources>(entity =>
+        modelBuilder.Entity<LegalResource>(entity =>
         {
             entity.HasKey(e => e.resourceID).HasName("LegalResources_pkey");
 
@@ -167,7 +167,7 @@ public partial class ThesisDappDBContext : DbContext
             entity.Property(e => e.password)
                 .HasMaxLength(255)
                 .HasComment("hased");
-            entity.Property(e => e.refreshToekn).HasMaxLength(255);
+            entity.Property(e => e.refreshToken).HasMaxLength(255);
             entity.Property(e => e.role)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("'client'::character varying");
