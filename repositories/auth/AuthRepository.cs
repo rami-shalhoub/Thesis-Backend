@@ -32,6 +32,7 @@ namespace Backend.repositories.auth
             {
                 throw new InvalidOperationException("User not found.");
             }
+            _context.RevokedToken.RemoveRange(_context.RevokedToken.Where(rt => rt.userID == id));
             _context.User.Remove(user);
             await _context.SaveChangesAsync();
             return user;

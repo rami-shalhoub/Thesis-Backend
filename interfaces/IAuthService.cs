@@ -11,8 +11,9 @@ namespace Backend.services.auth
     {
         Task<User> RegisterAsync(RegisterDto registerDto);
         Task<User> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto);
-        // Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
-        // Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenDto refreshTokenDto);
-        Task LogoutAsync(string accessToken, string refreshToken);
+        Task<User> DeleteUserAsync(Guid id);
+        Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
+        Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenDto refreshTokenDto);
+        Task LogoutAsync(string accessToken);
     }
 }
