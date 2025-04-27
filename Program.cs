@@ -1,11 +1,16 @@
 using Backend.data;
+using Backend.interfaces;
+using Backend.repositories;
+using Backend.services;
+using Backend.services.AI;
+using Backend.services.Mapping;
+using Backend.services.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Backend.mappers;
 using Microsoft.AspNetCore.Identity;
 using Backend.models;
 using Backend.repositories.auth;
 using Backend.services.auth;
-using Backend.services;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using SwaggerThemes;
+using Pgvector.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,14 +88,41 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-//~ Register services
+//~ Register Authentication services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 
+//~ Register DeepSeek configuration
+builder.Services.Configure<DeepseekConfig>(builder.Configuration.GetSection("DeepSeek"));
+
+//~ Register AI chat services
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IDeepseekService, DeepseekService>();
+builder.Services.AddScoped<ISourceService, SourceService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
+//~ Register repositories
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IContextSummaryRepository, ContextSummaryRepository>();
+
 //~ Connection string
 builder.Services.AddDbContext<ThesisDappDBContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseVector()));  // Add vector support for Pgvector
+
+//~ Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
 
 //~ Register Controllers
 builder.Services.AddControllers().AddJsonOptions(options =>{
@@ -99,7 +132,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>{
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+//~ Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -108,10 +141,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Add authentication middleware
+
+
+//~ Use custom middleware
+app.UseChatLogging();
+
+
+//~ Add authentication middleware
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("AllowAll");
 
+app.UseRouting();
 app.MapControllers();
 
 app.Run();
