@@ -13,10 +13,14 @@ namespace Backend.services
     public class SessionRepository : ISessionRepository
     {
         private readonly ThesisDappDBContext _context;
+        private readonly IContextSummaryRepository _contextSummaryRepository;
+        private readonly IMessageRepository _messageRepository;
 
-        public SessionRepository(ThesisDappDBContext context)
+        public SessionRepository(ThesisDappDBContext context, IContextSummaryRepository contextSummaryRepository, IMessageRepository messageRepository)
         {
             _context = context;
+            _contextSummaryRepository = contextSummaryRepository;
+            _messageRepository = messageRepository;
         }
 
         public async Task<Session> CreateAsync(Session session)
@@ -32,7 +36,7 @@ namespace Backend.services
 
             return session;
         }
- 
+
         public async Task<Session> GetByIdAsync(Guid sessionId)
         {
             var session = await _context.Session
@@ -55,18 +59,18 @@ namespace Backend.services
                     Console.WriteLine($"Updating session {session.sessionID} with legal topics: {legalTopics}");
                     session.legalTopics = legalTopics;
                 }
-            
+
                 session.updatedAt = DateTime.Now;
 
                 _context.Session.Update(session);
                 int rowsAffected = await _context.SaveChangesAsync();
-                
+
                 Console.WriteLine($"Session update completed. Rows affected: {rowsAffected}");
                 Console.WriteLine($"Updated session: ID={session.sessionID}, Title={session.sessionTitle}, ContextWindow={session.contextWindow.Substring(0, Math.Min(session.contextWindow.Length, 100))}...");
 
                 // Refresh the session from the database to ensure we have the latest data
                 await _context.Entry(session).ReloadAsync();
-                
+
                 return session;
             }
             catch (Exception ex)
@@ -106,11 +110,47 @@ namespace Backend.services
 
         //     return string.Join(", ", uniqueTopics);
         // }
-        
-        public async Task<List<Session>> GetAllSessionsAsync()
+
+        public async Task<List<Session>> GetAllSessionsAsync(Guid userId)
         {
-            var sessions = await _context.Session.ToListAsync() ?? throw new KeyNotFoundException($"No sessions found.");
+            var sessions = await _context.Session.Where(u => u.userID == userId).ToListAsync() ?? throw new KeyNotFoundException($"No sessions found.");
             return sessions;
+        }
+
+        public async Task<bool> DeleteSessionAsync(Guid sessionId)
+        {
+            await _messageRepository.DeleteMessageAsync(sessionId);
+            await _contextSummaryRepository.DeleteSummaryAsync(sessionId);
+            var session = await _context.Session.FirstOrDefaultAsync(s => s.sessionID == sessionId);
+
+            if (session == null)
+            {
+                throw new KeyNotFoundException($"Session with ID {sessionId} was not found.");
+            }
+
+            _context.Session.Remove(session);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> DeleteAllSessionsAsync(Guid userId)
+        {
+            var sessions = await _context.Session.Where(s => s.userID == userId).ToListAsync();
+
+            if (sessions.Count == 0)
+            {
+                throw new KeyNotFoundException($"No sessions found for user with ID {userId}.");
+            }
+            var sessionIds = sessions.Select(s => s.sessionID).ToList();
+            await _messageRepository.DeleteAllMessagesAsync(sessionIds);
+            await _contextSummaryRepository.DeleteAllSummariesAsync(sessionIds);
+
+            _context.Session.RemoveRange(sessions);
+            await _context.SaveChangesAsync();
+
+            return true;
+
         }
     }
 }

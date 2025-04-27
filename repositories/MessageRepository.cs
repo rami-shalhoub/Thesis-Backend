@@ -68,5 +68,34 @@ namespace Backend.services
 
             return lastMessage ?? throw new InvalidOperationException("No messages found for the given session ID.");
         }
+
+        public async Task<bool> DeleteMessageAsync(Guid sessionId)
+        {
+            var message = await _context.Message.Where(m => m.sessionID == sessionId).ToListAsync();
+            if (message.Count == 0)
+            {
+                return false;
+            }
+
+            _context.Message.RemoveRange(message);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        
+        public async Task<bool> DeleteAllMessagesAsync(List<Guid> sessionIds)
+        {
+            var messages = await _context.Message
+                .Where(m => sessionIds.Contains(m.sessionID))
+                .ToListAsync();
+
+            if (messages.Count == 0)
+            {
+                return false;
+            }
+
+            _context.Message.RemoveRange(messages);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

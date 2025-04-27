@@ -11,10 +11,14 @@ namespace Backend.interfaces
 
         Task<Session> GetByIdAsync(Guid sessionId);
 
-        Task<Session> UpdateAsync(Session session , string? legalTopics = null);
+        Task<Session> UpdateAsync(Session session, string? legalTopics = null);
 
         Task<Session> GetWithMessagesAsync(Guid sessionId);
-        
-        Task<List<Session>> GetAllSessionsAsync();
+
+        Task<List<Session>> GetAllSessionsAsync(Guid userId);
+
+        Task<bool> DeleteSessionAsync(Guid sessionId);
+
+        Task<bool> DeleteAllSessionsAsync(Guid userId);
     }
 }

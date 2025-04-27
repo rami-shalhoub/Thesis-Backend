@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Backend.models;
 
 namespace Backend.DTOs
 {
@@ -26,5 +27,7 @@ namespace Backend.DTOs
         public string? AnalysisParameter { get; set; }
 
         public List<MessageDTO> Messages { get; set; } = new List<MessageDTO>();
+
+        public List<ContextSummaryDTO> contextSummaries { get; set; } = new List<ContextSummaryDTO>();
     }
 }

@@ -19,13 +19,11 @@ namespace Backend.controllers
         }
 
         [HttpPost("session")]
-        public async Task<ActionResult<SessionDTO>> CreateSession([FromBody] CreateSessionRequest request)
+        public async Task<ActionResult<SessionDTO>> CreateSession(Guid userId)
         {
             try
             {
-                var session = await _chatService.CreateSessionAsync(
-                    request.UserId
-                    );
+                var session = await _chatService.CreateSessionAsync(userId);
 
                 return Ok(session);
             }
@@ -35,15 +33,15 @@ namespace Backend.controllers
             }
         }
 
-        [HttpGet("sessions/{id}")]
-        public async Task<ActionResult<SessionDTO>> GetSession(Guid id)
+        [HttpGet("session/{sessionid}")]
+        public async Task<ActionResult<SessionDTO>> GetSession(Guid sessionid)
         {
             try
             {
-                var session = await _chatService.GetSessionAsync(id);
+                var session = await _chatService.GetSessionAsync(sessionid);
                 if (session == null)
                 {
-                    return NotFound(new { error = $"Session with ID {id} not found" });
+                    return NotFound(new { error = $"Session with ID {sessionid} not found" });
                 }
 
                 return Ok(session);
@@ -55,11 +53,11 @@ namespace Backend.controllers
         }
 
         [HttpGet("sessions")]
-        public async Task<ActionResult<IEnumerable<SessionDTO>>> GetAllSessions()
+        public async Task<ActionResult<IEnumerable<SessionDTO>>> GetAllSessions(Guid userId)
         {
             try
             {
-                var sessions = await _chatService.GetAllSessionsAsync();
+                var sessions = await _chatService.GetAllSessionsAsync(userId);
                 return Ok(sessions);
             }
             catch (Exception ex)
@@ -68,15 +66,52 @@ namespace Backend.controllers
             }
         }
 
-        [HttpPost("sessions/{id}/close")]
-        public async Task<ActionResult> CloseSession(Guid id)
+        [HttpPost("session/{sessionId}/close")]
+        public async Task<ActionResult> CloseSession(Guid sessionId)
         {
             try
             {
-                var success = await _chatService.CloseSessionAsync(id);
+                var success = await _chatService.CloseSessionAsync(sessionId);
                 if (!success)
                 {
-                    return NotFound(new { error = $"Session with ID {id} not found" });
+                    return NotFound(new { error = $"Session with ID {sessionId} not found" });
+                }
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+        
+        [HttpDelete("session/{sessionId}")]
+        public async Task<ActionResult> DeleteSession(Guid sessionId)
+        {
+            try
+            {
+                var success = await _chatService.DeleteSessionAsync(sessionId);
+                if (!success)
+                {
+                    return NotFound(new { error = $"Session with ID {sessionId} not found" });
+                }
+
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+        [HttpDelete("sessions")]
+        public async Task<ActionResult> DeleteAllSessions(Guid userId)
+        {
+            try
+            {
+                var success = await _chatService.DeleteAllSessionsAsync( userId);
+                if (!success)
+                {
+                    return NotFound(new { error = "No sessions found" });
                 }
 
                 return Ok(new { success = true });
@@ -87,18 +122,14 @@ namespace Backend.controllers
             }
         }
 
-        //TODO write delete session and delete all sessions
 
-
-        [HttpPost("sessions/{id}/messages")]
-        public async Task<ActionResult<ChatResponseDTO>> SendMessage(Guid id, [FromBody] ChatRequestDTO request)
+        [HttpPost("session/{sessionId}/messages")]
+        public async Task<ActionResult<ChatResponseDTO>> SendMessage(Guid sessionId, [FromBody] ChatRequestDTO request)
         {
             try
             {
-                //* Override the session ID in the request with the one from the URL
-                request.SessionId = id;
 
-                var response = await _chatService.SendMessageAsync(id, request.Prompt);
+                var response = await _chatService.SendMessageAsync(sessionId, request.Prompt);
                 return Ok(response);
             }
             catch (ArgumentException ex)
@@ -114,10 +145,5 @@ namespace Backend.controllers
                 return StatusCode(500, new { error = $"An error occurred: {ex.Message}" });
             }
         }
-    }
-
-    public class CreateSessionRequest
-    {
-        public Guid UserId { get; set; }
     }
 }

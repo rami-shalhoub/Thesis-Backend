@@ -72,9 +72,9 @@ namespace Backend.services.AI
             return MapSessionToDTO(session);
         }
 
-        public async Task<List<Session>?> GetAllSessionsAsync()
+        public async Task<List<Session>?> GetAllSessionsAsync(Guid userId)
         {
-            var sessions = await _sessionRepository.GetAllSessionsAsync();
+            var sessions = await _sessionRepository.GetAllSessionsAsync(userId);
             if (sessions == null)
             {
                 return null;
@@ -93,6 +93,34 @@ namespace Backend.services.AI
 
             session.isActive = false;
             await _sessionRepository.UpdateAsync(session);
+
+            return true;
+        }
+
+        public async Task<bool> DeleteSessionAsync(Guid sessionId)
+        {
+            var session = await _sessionRepository.GetByIdAsync(sessionId);
+            if (session == null)
+            {
+                return false;
+            }
+
+            await _sessionRepository.DeleteSessionAsync(session.sessionID);
+
+            return true;
+        }
+        public async Task<bool> DeleteAllSessionsAsync(Guid userId)
+        {
+            var sessions = await _sessionRepository.GetAllSessionsAsync(userId);
+            if (sessions == null || !sessions.Any())
+            {
+                return false;
+            }
+
+            foreach (var session in sessions)
+            {
+                await _sessionRepository.DeleteAllSessionsAsync(session.userID);
+            }
 
             return true;
         }

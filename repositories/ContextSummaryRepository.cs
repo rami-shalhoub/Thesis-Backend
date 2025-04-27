@@ -54,5 +54,37 @@ namespace Backend.repositories
 
             return result ?? throw new InvalidOperationException("No recent ContextSummary found for the given session ID.");
         }
+
+        public async Task<bool> DeleteSummaryAsync(Guid sessionId)
+        {
+            var summary = await _context.ContextSummary.Where(s => s.sessionID == sessionId).ToListAsync();
+
+            if (summary == null)
+            {
+                return false;
+            }
+
+            _context.ContextSummary.RemoveRange(summary);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> DeleteAllSummariesAsync(List<Guid> sessionIds)
+        {
+            var summaries = await _context.ContextSummary
+                .Where(s => sessionIds.Contains(s.sessionID))
+                .ToListAsync();
+
+            if (summaries == null || !summaries.Any())
+            {
+                return false;
+            }
+
+            _context.ContextSummary.RemoveRange(summaries);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
