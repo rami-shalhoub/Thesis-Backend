@@ -77,32 +77,37 @@ namespace Backend.controllers
             }
         }
 
-        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             try
             {
+                // Check if Authorization header exists
+                if (!HttpContext.Request.Headers.ContainsKey("Authorization"))
+                {
+                    // No token provided, but we'll still return success for client-side logout
+                    return Ok(new { message = "Logged out successfully (no token provided)" });
+                }
+
                 // Get the access token from the Authorization header
-                var accessToken = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+                {
+                    // Invalid token format, but we'll still return success for client-side logout
+                    return Ok(new { message = "Logged out successfully (invalid token format)" });
+                }
 
-                // Get the refresh token from the request body
-                // var refreshToken = Request.Cookies["refreshToken"];
-                // var refreshToken = "143802a5-dabb-48b9-a3db-c42131a3251eb"; // Placeholder for the refresh token
+                var accessToken = authHeader.Replace("Bearer ", "");
 
-                // if (string.IsNullOrEmpty(refreshToken))
-                // {
-                //     return BadRequest(new { message = "Refresh token is missing or invalid." });
-                // }
-
+                // Call the logout service
                 await _authService.LogoutAsync(accessToken);
                 return Ok(new { message = "Logged out successfully" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Even if there's an error, we still want to return a success response
-                // as the user is effectively logged out on the client side
-                return Ok(new { message = "Logged out successfully" });
+                // Log the exception but still return success for client-side logout
+                Console.WriteLine($"Error during logout: {ex.Message}");
+                return Ok(new { message = "Logged out successfully (server-side error handled)" });
             }
         }
 

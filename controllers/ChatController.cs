@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend.DTOs;
 using Backend.interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.controllers
 {
     [ApiController]
     [Route("api/ai")]
+    [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
@@ -18,6 +20,7 @@ namespace Backend.controllers
             _chatService = chatService;
         }
 
+        [Authorize]
         [HttpPost("session")]
         public async Task<ActionResult<SessionDTO>> CreateSession(Guid userId)
         {
@@ -33,6 +36,7 @@ namespace Backend.controllers
             }
         }
 
+        [Authorize]
         [HttpGet("session/{sessionid}")]
         public async Task<ActionResult<SessionDTO>> GetSession(Guid sessionid)
         {
@@ -52,6 +56,7 @@ namespace Backend.controllers
             }
         }
 
+        [Authorize]
         [HttpGet("sessions")]
         public async Task<ActionResult<IEnumerable<SessionDTO>>> GetAllSessions(Guid userId)
         {
@@ -66,6 +71,7 @@ namespace Backend.controllers
             }
         }
 
+        [Authorize]
         [HttpPost("session/{sessionId}/close")]
         public async Task<ActionResult> CloseSession(Guid sessionId)
         {
@@ -84,7 +90,8 @@ namespace Backend.controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
-        
+
+        [Authorize]
         [HttpDelete("session/{sessionId}")]
         public async Task<ActionResult> DeleteSession(Guid sessionId)
         {
@@ -103,12 +110,14 @@ namespace Backend.controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [Authorize]
         [HttpDelete("sessions")]
         public async Task<ActionResult> DeleteAllSessions(Guid userId)
         {
             try
             {
-                var success = await _chatService.DeleteAllSessionsAsync( userId);
+                var success = await _chatService.DeleteAllSessionsAsync(userId);
                 if (!success)
                 {
                     return NotFound(new { error = "No sessions found" });
@@ -122,7 +131,7 @@ namespace Backend.controllers
             }
         }
 
-
+        [Authorize]
         [HttpPost("session/{sessionId}/messages")]
         public async Task<ActionResult<ChatResponseDTO>> SendMessage(Guid sessionId, [FromBody] ChatRequestDTO request)
         {

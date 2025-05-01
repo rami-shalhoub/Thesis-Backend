@@ -63,27 +63,50 @@ namespace Backend.services
 
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
-            var tokenValidationParameters = new TokenValidationParameters
+            try
             {
-                ValidateAudience = true,
-                ValidateIssuer = true,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? throw new ArgumentNullException("JWT:Secret configuration is missing."))),
-                ValidateLifetime = false, // Don't validate lifetime here as we're validating expired tokens
-                ValidIssuer = _configuration["JWT:Issuer"],
-                ValidAudience = _configuration["JWT:Audience"]
-            };
+                // Check for null or empty token
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new ArgumentNullException(nameof(token), "Token cannot be null or empty");
+                }
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+                // Set up token validation parameters with more lenient validation
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = false,  // More lenient validation for logout
+                    ValidateIssuer = false,    // More lenient validation for logout
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? throw new ArgumentNullException("JWT:Secret configuration is missing."))),
+                    ValidateLifetime = false,  // Don't validate lifetime for logout
+                    RequireExpirationTime = false,
+                    RequireSignedTokens = true
+                };
 
-            if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("Invalid token");
+                var tokenHandler = new JwtSecurityTokenHandler();
+                
+                // Check if token is in valid JWT format
+                if (!tokenHandler.CanReadToken(token))
+                {
+                    throw new SecurityTokenException("Token is not in a valid JWT format");
+                }
+
+                // Validate the token
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+                // Additional validation
+                if (securityToken is not JwtSecurityToken jwtSecurityToken)
+                {
+                    throw new SecurityTokenException("Invalid token type");
+                }
+
+                return principal;
             }
-
-            return principal;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error validating token: {ex.Message}");
+                throw; // Rethrow to be handled by the caller
+            }
         }
 
         public async Task<bool> IsRefreshTokenValid(Guid userId, string refreshToken)

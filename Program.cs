@@ -4,7 +4,6 @@ using Backend.repositories;
 using Backend.services;
 using Backend.services.AI;
 using Backend.services.Mapping;
-using Backend.services.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Backend.mappers;
 using Microsoft.AspNetCore.Identity;
@@ -68,8 +67,8 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultForbidScheme =
-    options.DefaultSignInScheme =
+    options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
@@ -87,6 +86,9 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"] ?? throw new InvalidOperationException("JWT:Secret is not configured")))
     };
 });
+
+//~ Add Authorization policies
+builder.Services.AddAuthorization();
 
 //~ Register Authentication services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -136,23 +138,19 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(Theme.Dracula);
+    app.UseSwaggerUI(Theme.UniversalDark);
 }
 
 app.UseHttpsRedirection();
 
-
-
-//~ Use custom middleware
-app.UseChatLogging();
-
+//~ Configure middleware pipeline in the correct order
+app.UseRouting();
+app.UseCors("AllowAll");
 
 //~ Add authentication middleware
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("AllowAll");
 
-app.UseRouting();
 app.MapControllers();
 
 app.Run();

@@ -180,21 +180,64 @@ namespace Backend.services
         {
             try
             {
-                var principal = _jwtService.GetPrincipalFromExpiredToken(accessToken);
+                // Check if token is empty or null
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    Console.WriteLine("Logout attempted with empty token");
+                    return; // Nothing to do with an empty token
+                }
+
+                // Try to get the principal from the token
+                ClaimsPrincipal principal;
+                try
+                {
+                    principal = _jwtService.GetPrincipalFromExpiredToken(accessToken);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Token validation failed during logout: {ex.Message}");
+                    return; // Can't proceed with invalid token
+                }
+
+                // Try to get the user ID from the principal
                 var userIdString = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
-
                 if (string.IsNullOrEmpty(userIdString))
-                    throw new ApplicationException("Invalid token: User ID not found");
+                {
+                    Console.WriteLine("User ID not found in token claims");
+                    return; // Can't proceed without user ID
+                }
 
-                var userId = Guid.Parse(userIdString);
+                // Parse the user ID
+                Guid userId;
+                try
+                {
+                    userId = Guid.Parse(userIdString);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to parse user ID: {ex.Message}");
+                    return; // Can't proceed with invalid user ID
+                }
 
-                var refreshToken = _authRepository.GetByIDAsync(userId).Result.refreshToken;
-                await _jwtService.RevokeRefreshToken(refreshToken, userId);
-
+                // Get the user and their refresh token
                 var user = await _authRepository.GetByIDAsync(userId);
+                if (user == null)
+                {
+                    Console.WriteLine($"User not found for ID: {userId}");
+                    return; // User doesn't exist
+                }
+
+                // Revoke the refresh token if it exists
+                if (!string.IsNullOrEmpty(user.refreshToken))
+                {
+                    await _jwtService.RevokeRefreshToken(user.refreshToken, userId);
+                }
+
+                // Clear the user's refresh token and expiry
                 user.refreshToken = string.Empty;
                 user.tokenExpiry = DateTime.MinValue;
 
+                // Update the user
                 await _authRepository.UpdateAsync(user.userID, new UpdateUserDto
                 {
                     email = user.email,
@@ -202,11 +245,13 @@ namespace Backend.services
                     organisationID = user.organisationID,
                     password = string.Empty // Not updating password here
                 });
+
+                Console.WriteLine($"User {userId} logged out successfully");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // If token validation fails, we still want to revoke the refresh token if possible
-                // This is a best-effort approach
+                // Log the exception but don't rethrow
+                Console.WriteLine($"Error during logout process: {ex.Message}");
             }
         }
     }
