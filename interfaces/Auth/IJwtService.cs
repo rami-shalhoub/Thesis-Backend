@@ -8,7 +8,7 @@ namespace Backend.services.auth
     public interface IJwtService
     {
         string GenerateAccessToken(User user);
-        string GenerateRefreshToken();
+        string GenerateRefreshToken(User user);
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
         Task<bool> IsRefreshTokenValid(Guid userId, string refreshToken);
         Task RevokeRefreshToken(string refreshToken, Guid userId);
