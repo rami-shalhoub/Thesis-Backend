@@ -35,7 +35,7 @@ namespace Backend.controllers
         }
 
         [Authorize]
-        [HttpPut("update{id}")]
+        [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto updateUserDto)
         {
             try

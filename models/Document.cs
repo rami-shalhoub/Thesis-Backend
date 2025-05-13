@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Pgvector;
 
 namespace Backend.models;
 
@@ -31,6 +32,8 @@ public partial class Document
     public DateTime? updatedAt { get; set; }
 
     public string accessControl { get; set; } = null!;
+
+    public Vector? embedding { get; set; }
 
     public virtual ICollection<AccessLog> AccessLog { get; set; } = new List<AccessLog>();
 

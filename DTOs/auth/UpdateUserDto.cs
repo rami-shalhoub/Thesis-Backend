@@ -11,8 +11,8 @@ namespace Backend.DTOs.auth
         [Required, EmailAddress]
         public required string email { get; set; }
 
-        [Required, MinLength(8)]
-        public required string password { get; set; }
+      //   [Required, MinLength(8)]
+      //   public required string password { get; set; }
 
         [Required]
         public required string name { get; set; }

@@ -80,9 +80,6 @@ namespace Backend.services
 
          _mapper.Map(updateUserDto, user);
 
-         if (!string.IsNullOrEmpty(updateUserDto.password))
-            user.password = _passwordHasher.HashPassword(user, updateUserDto.password);
-
          return await _authRepository.UpdateAsync(id, updateUserDto);
       }
 
@@ -111,8 +108,7 @@ namespace Backend.services
          {
             email = user.email,
             name = user.name,
-            organisationID = user.organisationID,
-            password = string.Empty // Not updating password here
+            organisationID = user.organisationID
          });
 
          return new AuthResponseDto
@@ -187,8 +183,7 @@ namespace Backend.services
             {
                email = user.email,
                name = user.name,
-               organisationID = user.organisationID,
-               password = string.Empty // Not updating password here
+               organisationID = user.organisationID
             });
 
             // Revoke old refresh token
@@ -293,8 +288,7 @@ namespace Backend.services
             {
                email = user.email,
                name = user.name,
-               organisationID = user.organisationID,
-               password = string.Empty // Not updating password here
+               organisationID = user.organisationID
             });
 
             Console.WriteLine($"User {userId} logged out successfully");

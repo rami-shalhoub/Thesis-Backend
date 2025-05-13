@@ -68,7 +68,7 @@ public partial class ThesisDappDBContext : DbContext
             entity.Property(e => e.createdAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone");
-            entity.Property(e => e.embedding).HasColumnType("vector(1536)");
+            entity.Property(e => e.embedding).HasMaxLength(1536);
 
             entity.HasOne(d => d.session).WithMany(p => p.ContextSummary)
                 .HasForeignKey(d => d.sessionID)
