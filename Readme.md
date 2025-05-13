@@ -1,7 +1,11 @@
-# Readme
 ## Introduction
 
 this is the Backend for my thesis application, designed using ASP.NET Core
+
+- [x] user authentication endpoints
+- [x] chat services endpoints
+- [ ] upload document endpoint
+- [ ] blockchain gateway connection
 
 * * *
 
@@ -9,20 +13,25 @@ this is the Backend for my thesis application, designed using ASP.NET Core
 
 ### Backend Components
 
-<figure class="image"><img style="aspect-ratio:2000/966;" src="readmeAssets/Readme_backendComponents.png" width="2000" height="966"></figure>
+<figure class="image image_resized"><img style="aspect-ratio:2000/966;" src="readmeAssets/Readme_backendComponents.png" width="2000" height="966"></figure>
 
 > [!IMPORTANT]
 > The IPFS and Hyperledger fabric services are not yet set up
 
 ### Database
 
-The database is designed for PostgreSQL
+The database is designed on PostgreSQL
 
-<figure class="image"><img style="aspect-ratio:1156/769;" src="readmeAssets/Readme_ThesisDBerd.png" width="1156" height="769"></figure>
+<figure class="image" style="width:200%;"><img style="aspect-ratio:1156/769;" src="readmeAssets/Readme_ThesisDBerd.png" width="1156" height="769"></figure>
 
 * * *
 
 ## Set up
+
+> [!IMPORTANT]
+> The project with its set up steps has been developed and tested on Ubuntu
+> 
+> When operating on Windows OS, there should theoretically not be an issue. However, please test at your own discretion as there might be some discrepancies and differences in operation the setup 
 
 1.  if you don't have ASP.NET Core 8 already installed pleas follow the instruction in from the [official website](https://learn.microsoft.com/en-us/dotnet/core/install/) , you can check the version of the installed framework using:
     
@@ -79,7 +88,7 @@ The database is designed for PostgreSQL
     ```
 
 > [!NOTE]
-> it is not necessary to provide an OpenAI API key as the generation of the embedding key has some problem and is not working as expected
+> It is not necessary to provide an OpenAI API key as the generation of the embedding key has some problem and is not working as expected
 
 7.  then you need to migrate the data models to the database 
     
@@ -94,5 +103,32 @@ The database is designed for PostgreSQL
 
 * * *
 
+## Endpoints
+
+### User Auth
+
+*   Register: for registering a new user
+
 > [!NOTE]
-> after logging in, copy the generated access toke and past it in the top green button \[Authorize\] to get access to the endpoints that requires authorisation
+> Available Organisations: ClientOrgMSP, LawfirmOrgMSP, RetailOrgMSP  
+> Available Role: client, peer, admin
+
+*   Login: signing using the user email and password
+
+> [!IMPORTANT]
+> After logging in, copy the generated access toke and paste it in the top green button \[Authorize\] to get access to the endpoints that requires authorisation
+
+*   log out: Logging the user out and revoke their refresh token
+*   refresh-token: To refresh the access token.
+*   update user: To update the user name, email, and organisation. Requires the user ID. Need Authorisation
+*   delete user: To delete the user from the database with any data connected to this session in other tables. Requires the user ID. Need Authorisation
+
+### Chat (Need Authorisation)
+
+*   create session: Create a session. Requires the user ID
+*   get a session with its messages: Requires the session ID
+*   get all sessions
+*   delete a session: Delete the session from the database with any data connected to this session in other tables. Requires a session ID
+*   delete all session: Delete all the sessions from the database with any data connected to them in other tables. Requires the user ID
+*   message: Send a message to the LLM, the response will contain an answer to the user question whit the relevant sources. Requires a session ID
+*   close session: Closing an active session. Requires a session ID
